@@ -2,6 +2,10 @@ variable "cluster_name" {
   type = string
 }
 
+variable "vpc_id" {
+  type = string
+}
+
 variable "lb_controller_role_arn" {
   type = string
 }

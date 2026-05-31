@@ -179,6 +179,7 @@ resource "aws_eks_addon" "cloudwatch_observability" {
 module "k8s" {
   source                 = "./modules/k8s"
   cluster_name           = var.cluster_name
+  vpc_id                 = module.vpc.vpc_id
   lb_controller_role_arn = module.iam.lb_controller_role_arn
   cart_irsa_role_arn     = module.iam.cart_irsa_role_arn
   mysql_endpoint         = module.rds.mysql_endpoint

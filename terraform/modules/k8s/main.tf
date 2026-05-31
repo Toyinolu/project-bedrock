@@ -86,6 +86,11 @@ resource "helm_release" "aws_lb_controller" {
     name  = "region"
     value = var.region
   }
+
+  set {
+    name  = "vpcId"
+    value = var.vpc_id
+  }
 }
 
 # ── Retail Store App (Helm) ───────────────────────────────────────────────────
