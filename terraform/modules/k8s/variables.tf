@@ -32,6 +32,16 @@ variable "dynamodb_table_name" {
   type = string
 }
 
+variable "mysql_username" {
+  type    = string
+  default = "admin"
+}
+
+variable "postgres_username" {
+  type    = string
+  default = "dbadmin"
+}
+
 variable "region" {
   type = string
 }

@@ -17,7 +17,7 @@ resource "kubernetes_secret" "catalog_db" {
   }
 
   data = {
-    RETAIL_CATALOG_PERSISTENCE_USER     = "admin"
+    RETAIL_CATALOG_PERSISTENCE_USER     = var.mysql_username
     RETAIL_CATALOG_PERSISTENCE_PASSWORD = var.mysql_password
   }
 
@@ -32,7 +32,7 @@ resource "kubernetes_secret" "orders_db" {
   }
 
   data = {
-    RETAIL_ORDERS_PERSISTENCE_USER     = "admin"
+    RETAIL_ORDERS_PERSISTENCE_USER     = var.postgres_username
     RETAIL_ORDERS_PERSISTENCE_PASSWORD = var.postgres_password
   }
 

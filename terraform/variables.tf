@@ -55,7 +55,7 @@ variable "node_max_size" {
 variable "db_master_username" {
   description = "Master username for RDS instances"
   type        = string
-  default     = "admin"
+  default     = "dbadmin"
 }
 
 variable "github_org" {

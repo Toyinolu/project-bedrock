@@ -154,10 +154,10 @@ module "dynamodb" {
 module "secrets" {
   source            = "./modules/secrets"
   mysql_endpoint    = module.rds.mysql_endpoint
-  mysql_username    = var.db_master_username
+  mysql_username    = module.rds.mysql_username
   mysql_password    = module.rds.mysql_password
   postgres_endpoint = module.rds.postgres_endpoint
-  postgres_username = var.db_master_username
+  postgres_username = module.rds.postgres_username
   postgres_password = module.rds.postgres_password
 
   depends_on = [module.rds]
@@ -186,6 +186,8 @@ module "k8s" {
   postgres_endpoint      = module.rds.postgres_endpoint
   postgres_password      = module.rds.postgres_password
   dynamodb_table_name    = module.dynamodb.table_name
+  mysql_username         = module.rds.mysql_username
+  postgres_username      = module.rds.postgres_username
   region                 = var.region
   domain_name            = var.domain_name
   acm_certificate_arn    = module.iam.acm_certificate_arn
