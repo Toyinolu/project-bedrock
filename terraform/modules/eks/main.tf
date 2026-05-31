@@ -29,7 +29,7 @@ resource "aws_eks_node_group" "main" {
   subnet_ids      = var.private_subnet_ids
 
   instance_types = [var.node_instance_type]
-  ami_type       = "AL2023_x86_64_STANDARD"
+  ami_type       = "AL2_x86_64"
 
   scaling_config {
     desired_size = var.node_desired_size
