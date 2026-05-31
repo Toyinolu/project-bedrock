@@ -1,0 +1,40 @@
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup
+*.tfplan
+terraform.tfvars.local
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+crash.log
+crash.*.log
+
+# Lambda build artifacts
+terraform/modules/serverless/lambda.zip
+
+# Helm build artifacts
+helm/**/charts/
+helm/**/*.tgz
+
+# Upstream cloned chart repo (checked out locally, not committed)
+helm/retail-store-sample-app/
+
+# Secrets — never commit these
+*.pem
+*.key
+.env
+.env.*
+secrets.yaml
+*credentials*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
