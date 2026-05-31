@@ -90,9 +90,10 @@ ui:
       alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
       alb.ingress.kubernetes.io/ssl-redirect: "443"
 %{ endif ~}
+%{ if domain_name != "" ~}
     hosts:
-      - host: "${domain_name}"
-        paths:
-          - path: /
-            pathType: Prefix
+      - "${domain_name}"
+%{ else ~}
+    hosts: []
+%{ endif ~}
     tls: []
