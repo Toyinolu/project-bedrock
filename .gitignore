@@ -1,6 +1,6 @@
 # Terraform
 .terraform/
-.terraform.lock.hcl
+# .terraform.lock.hcl is committed intentionally for reproducible provider versions
 *.tfstate
 *.tfstate.backup
 *.tfplan

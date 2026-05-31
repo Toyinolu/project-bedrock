@@ -4,6 +4,6 @@ terraform {
     key     = "project-bedrock/terraform.tfstate"
     region  = "us-east-1"
     encrypt = true
-    dynamodb_table = "project-bedrock-tfstate-lock"
+    use_lockfile = true
   }
 }
