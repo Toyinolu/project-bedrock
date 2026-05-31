@@ -26,7 +26,8 @@ resource "aws_eks_node_group" "main" {
   cluster_name    = aws_eks_cluster.main.name
   node_group_name = "project-bedrock-nodes"
   node_role_arn   = var.node_role_arn
-  subnet_ids      = var.private_subnet_ids
+  # Use only us-east-1b subnet (index 1) — t3 instances not available in us-east-1a for this account
+  subnet_ids      = [var.private_subnet_ids[1]]
 
   instance_types = [var.node_instance_type]
   ami_type       = "AL2_x86_64"
