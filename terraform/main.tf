@@ -175,6 +175,37 @@ resource "aws_eks_addon" "cloudwatch_observability" {
   depends_on = [module.eks, module.iam]
 }
 
+# ── EKS access entry for the GitHub Actions CI/CD role ───────────────────────
+# CI runs `terraform apply`, which manages Kubernetes/Helm resources (namespace,
+# secrets, helm_release, RBAC). Without a cluster access entry the kubernetes/helm
+# providers get "Unauthorized" and the Apply workflow fails. Cluster-admin is
+# required because CI fully manages in-cluster objects. Created at root level
+# (not in module.eks) to avoid a cycle: the role lives in module.iam, which
+# depends on module.eks for the OIDC provider.
+resource "aws_eks_access_entry" "github_actions" {
+  count         = var.github_org != "" ? 1 : 0
+  cluster_name  = var.cluster_name
+  principal_arn = module.iam.github_actions_role_arn
+  type          = "STANDARD"
+
+  tags = { Name = "github-actions-access-entry" }
+
+  depends_on = [module.eks, module.iam]
+}
+
+resource "aws_eks_access_policy_association" "github_actions" {
+  count         = var.github_org != "" ? 1 : 0
+  cluster_name  = var.cluster_name
+  principal_arn = module.iam.github_actions_role_arn
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+  access_scope {
+    type = "cluster"
+  }
+
+  depends_on = [aws_eks_access_entry.github_actions]
+}
+
 # ── Kubernetes (LB Controller + App + RBAC K8s resources) ────────────────────
 module "k8s" {
   source                 = "./modules/k8s"
