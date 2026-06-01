@@ -75,3 +75,5 @@ variable "domain_name" {
   type        = string
   default     = ""
 }
+
+# CI plan verification — this comment triggers the terraform-plan workflow on PR.
