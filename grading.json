@@ -24,11 +24,6 @@
     "type": "string",
     "value": "REDACTED_SEE_GOOGLE_DOC"
   },
-  "bedrock_dev_view_secret_access_key": {
-    "sensitive": true,
-    "type": "string",
-    "value": "REDACTED_SEE_GOOGLE_DOC"
-  },
   "cloudwatch_app_log_group": {
     "sensitive": false,
     "type": "string",
@@ -78,5 +73,8 @@
     "sensitive": false,
     "type": "string",
     "value": "vpc-052ae960f7fc89b9c"
+  },
+  "bedrock_dev_view_secret_access_key": {
+    "value": "REDACTED_SEE_GOOGLE_DOC"
   }
 }

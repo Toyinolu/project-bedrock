@@ -2,7 +2,7 @@ output "namespace" { value = kubernetes_namespace.retail_app.metadata[0].name }
 
 data "kubernetes_ingress_v1" "retail_store" {
   metadata {
-    name      = "retail-store-ingress"
+    name      = "ui" # Helm chart sets ui.fullnameOverride: ui
     namespace = kubernetes_namespace.retail_app.metadata[0].name
   }
   depends_on = [helm_release.retail_store]

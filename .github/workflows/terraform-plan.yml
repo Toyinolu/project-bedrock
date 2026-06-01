@@ -34,14 +34,12 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: "~> 1.8"
+          terraform_version: "~> 1.10"
 
-      # Chart must exist BEFORE terraform init so helm_release can resolve the local path
-      - name: Clone retail-store-sample-app chart
-        run: |
-          git clone --depth 1 https://github.com/aws-containers/retail-store-sample-app.git \
-            helm/retail-store-sample-app
-          helm dependency build helm/retail-store-sample-app/src/app/chart
+      # Chart is committed in the repo (helm/chart/); build its subchart deps
+      # BEFORE terraform init so the helm_release resource can resolve them.
+      - name: Build Helm chart dependencies
+        run: helm dependency build helm/chart/app/chart
 
       - name: Terraform Init
         working-directory: terraform

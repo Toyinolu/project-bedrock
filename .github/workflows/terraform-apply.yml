@@ -31,23 +31,22 @@ jobs:
         uses: azure/setup-helm@v3
         with:
           version: latest
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: "~> 1.8"
+          terraform_version: "~> 1.10"
 
       - name: Install kubectl
         run: |
           curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
           chmod +x kubectl && sudo mv kubectl /usr/local/bin/
 
-      # Chart must exist BEFORE terraform init/apply so helm_release can resolve the local path
-      - name: Clone retail-store-sample-app chart
-        run: |
-          git clone --depth 1 https://github.com/aws-containers/retail-store-sample-app.git \
-            helm/retail-store-sample-app
-          helm dependency build helm/retail-store-sample-app/src/app/chart
+      # Chart is committed in the repo (helm/chart/); build its subchart deps
+      # BEFORE terraform init/apply so the helm_release resource can resolve them.
+      - name: Build Helm chart dependencies
+        run: helm dependency build helm/chart/app/chart
 
       - name: Terraform Init
         working-directory: terraform
@@ -57,9 +56,17 @@ jobs:
         working-directory: terraform
         run: terraform apply -auto-approve
 
-      - name: Generate grading.json
+      - name: Generate grading.json (redact sensitive credentials)
         working-directory: terraform
-        run: terraform output -json > ../grading.json
+        run: |
+          # Generate full output, then redact sensitive values before committing.
+          # Real bedrock-dev-view credentials are delivered via the Google Doc only —
+          # committing them to the public repo trips AWS secret scanning and quarantines the key.
+          terraform output -json | jq '
+            (.bedrock_dev_view_access_key_id.value)     |= "REDACTED_SEE_GOOGLE_DOC" |
+            (.bedrock_dev_view_secret_access_key.value)  |= "REDACTED_SEE_GOOGLE_DOC" |
+            (.bedrock_dev_view_console_password.value)   |= "REDACTED_SEE_GOOGLE_DOC"
+          ' > ../grading.json
 
       - name: Commit grading.json
         run: |

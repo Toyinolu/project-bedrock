@@ -1,0 +1,114 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Project Bedrock — custom values.yaml for the upstream retail-store-sample-app
+# Helm chart (Bonus 5.1).
+#
+# This file overrides the chart's default in-cluster databases with managed AWS
+# services:
+#   - catalog  -> Amazon RDS MySQL
+#   - orders   -> Amazon RDS PostgreSQL (+ in-cluster RabbitMQ)
+#   - carts    -> Amazon DynamoDB (via IRSA, no static credentials)
+#   - checkout -> in-cluster Redis (chart default, allowed by the brief)
+#   - ui       -> exposed via an ALB Ingress (AWS Load Balancer Controller)
+#
+# Database credentials are NEVER hardcoded here. Three Kubernetes Secrets
+# (catalog-db, orders-db, orders-rabbitmq) are created out-of-band by Terraform
+# from AWS Secrets Manager / generated random_password values, and referenced
+# below by name with `secret.create: false`.
+#
+# Deploy with a single command (see README.md):
+#   helm upgrade --install retail-store \
+#     ./helm/retail-store-sample-app/src/app/chart \
+#     --namespace retail-app --create-namespace \
+#     -f helm/values-override.yaml
+# ─────────────────────────────────────────────────────────────────────────────
+
+catalog:
+  fullnameOverride: catalog
+  app:
+    persistence:
+      provider: mysql
+      endpoint: "project-bedrock-mysql.cw9asesosick.us-east-1.rds.amazonaws.com:3306"
+      database: catalog
+      secret:
+        create: false            # pre-created by Terraform (kubernetes_secret.catalog_db)
+        name: catalog-db
+        usernameKey: RETAIL_CATALOG_PERSISTENCE_USER
+        passwordKey: RETAIL_CATALOG_PERSISTENCE_PASSWORD
+  mysql:
+    create: false                # disable in-cluster MySQL — use RDS
+
+cart:
+  fullnameOverride: carts
+  serviceAccount:
+    create: true
+    name: carts
+    annotations:
+      eks.amazonaws.com/role-arn: "arn:aws:iam::094156048784:role/project-bedrock-cart-service-role"
+  app:
+    persistence:
+      provider: dynamodb
+      dynamodb:
+        tableName: "retail-store-carts"
+        createTable: false       # table is created by Terraform
+        region: "us-east-1"
+  dynamodb:
+    create: false                # no local DynamoDB sidecar — use Amazon DynamoDB
+
+checkout:
+  fullnameOverride: checkout
+  app:
+    persistence:
+      provider: redis
+    endpoints:
+      orders: http://orders:80
+  redis:
+    create: true                 # in-cluster Redis (allowed by the brief)
+    fullnameOverride: redis
+
+orders:
+  fullnameOverride: orders
+  app:
+    persistence:
+      provider: postgres
+      endpoint: "project-bedrock-postgres.cw9asesosick.us-east-1.rds.amazonaws.com:5432"
+      database: orders
+      secret:
+        create: false            # pre-created by Terraform (kubernetes_secret.orders_db)
+        name: orders-db
+        usernameKey: RETAIL_ORDERS_PERSISTENCE_USERNAME
+        passwordKey: RETAIL_ORDERS_PERSISTENCE_PASSWORD
+    messaging:
+      provider: rabbitmq
+      rabbitmq:
+        host: rabbitmq
+        port: 5672
+        secret:
+          create: false          # pre-created by Terraform (kubernetes_secret.orders_rabbitmq)
+          name: orders-rabbitmq
+          usernameKey: RETAIL_ORDERS_MESSAGING_RABBITMQ_USERNAME
+          passwordKey: RETAIL_ORDERS_MESSAGING_RABBITMQ_PASSWORD
+  postgresql:
+    create: false                # disable in-cluster PostgreSQL — use RDS
+  rabbitmq:
+    create: true                 # in-cluster RabbitMQ (allowed by the brief)
+    fullnameOverride: rabbitmq
+
+ui:
+  fullnameOverride: ui
+  service:
+    type: ClusterIP
+    port: 80
+  ingress:
+    enabled: true
+    className: alb
+    annotations:
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/healthcheck-path: /actuator/health/liveness
+      alb.ingress.kubernetes.io/tags: "Project=karatu-2025-capstone"
+      # ── Bonus 5.2 (TLS): uncomment and set the ACM cert ARN + a real domain ──
+      # alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:us-east-1:094156048784:certificate/REPLACE_ME"
+      # alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+      # alb.ingress.kubernetes.io/ssl-redirect: "443"
+    hosts: []                    # empty = catch-all ALB rule (no custom domain)
+    tls: []

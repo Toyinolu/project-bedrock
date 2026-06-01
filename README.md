@@ -52,7 +52,7 @@ Update `terraform.tfvars` with your GitHub username **before the first apply** �
 ```hcl
 github_org  = "your-github-username"   # REQUIRED for CI/CD OIDC to work
 github_repo = "project-bedrock"
-domain_name = "your-domain.com"        # REQUIRED for Bonus 5.2 TLS
+domain_name = ""                       # optional — set a registered domain to enable Bonus 5.2 TLS
 ```
 
 After first apply, add this secret in your GitHub repo settings → Secrets and variables → Actions:
@@ -70,9 +70,9 @@ terraform plan
 terraform apply
 ```
 
-> **Note on EKS version**: EKS v1.34 may not be GA yet. Check available versions with:
-> `aws eks describe-cluster-versions --region us-east-1`
-> Update `eks_version` in `terraform.tfvars` to the latest available.
+> **EKS version**: deployed on **v1.35** (≥ v1.34 as required). Check available
+> versions with `aws eks describe-cluster-versions --region us-east-1` and update
+> `eks_version` in `terraform.tfvars` if needed.
 
 ## Step 5 — CI/CD Pipeline
 
@@ -111,33 +111,50 @@ kubectl delete pod -n retail-app $(kubectl get pods -n retail-app -o jsonpath='{
 
 ## Helm Deployment (Bonus 5.1)
 
+The upstream retail-store-sample-app Helm chart is **committed to this repo** under
+[`helm/chart/`](helm/chart/), and a custom values file that overrides the data layer
+to point at RDS / DynamoDB is at [`helm/values-override.yaml`](helm/values-override.yaml).
+
 Deploy or upgrade the retail store app with a single command:
 
 ```bash
-helm dependency build helm/retail-store-sample-app/src/app/chart
+# build the subchart dependencies once
+helm dependency build helm/chart/app/chart
 
-helm upgrade --install retail-store helm/retail-store-sample-app/src/app/chart \
+# single-command deploy/upgrade
+helm upgrade --install retail-store helm/chart/app/chart \
   --namespace retail-app \
   --create-namespace \
-  --values terraform/modules/k8s/values-override.yaml.tpl
+  -f helm/values-override.yaml
 ```
 
-> Note: Terraform manages the actual deployment via `helm_release`. Use the above command only for manual testing.
+> Note: Terraform also manages this deployment via the `helm_release` resource
+> (pointing at the same committed chart), so a normal `terraform apply` deploys
+> the app automatically. The command above is for manual deploys / testing.
 
-## Bonus 5.2 — TLS/DNS
+## Bonus 5.2 — TLS/DNS (supported, not enabled on this deployment)
 
-Set these variables in `terraform.tfvars`:
-
-```hcl
-domain_name = "your-registered-domain.com"
-```
-
-Terraform will:
-1. Request an ACM certificate for `*.your-domain.com`
-2. Configure the ALB with HTTPS listener on port 443
-3. Redirect HTTP → HTTPS
-
-Add a Route53 CNAME record pointing your domain to the ALB DNS after first deploy.
+> **Status:** Not enabled. This AWS account is Free-Tier, which blocks Route53
+> domain registration, and a publicly-trusted ACM certificate cannot be issued
+> for a domain you do not control (ACM requires DNS/email validation of an owned
+> domain). The application is therefore exposed over **HTTP** via the ALB.
+>
+> The Terraform code already **supports** TLS end-to-end — it is gated behind the
+> `domain_name` variable. To enable genuine trusted HTTPS, register a domain,
+> create a Route53 hosted zone for it, then set in `terraform.tfvars`:
+>
+> ```hcl
+> domain_name = "your-registered-domain.com"
+> ```
+>
+> On the next `terraform apply`, the [`iam` module](terraform/modules/iam/route53.tf)
+> will:
+> 1. Request a DNS-validated ACM certificate for the domain (+ `*.domain`)
+> 2. Create the Route53 validation records and wait for issuance
+> 3. Create an A/ALIAS record pointing the domain at the ALB
+> 4. Attach the cert to the ALB via the ingress annotations
+>    (`certificate-arn`, `listen-ports [80,443]`, `ssl-redirect 443`), terminating
+>    TLS at the ALB and redirecting HTTP → HTTPS.
 
 ## Generate grading.json
 

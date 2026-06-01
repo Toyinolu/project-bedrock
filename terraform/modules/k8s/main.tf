@@ -96,7 +96,7 @@ resource "helm_release" "aws_lb_controller" {
 # ── Retail Store App (Helm) ───────────────────────────────────────────────────
 resource "helm_release" "retail_store" {
   name      = "retail-store"
-  chart     = "${path.root}/../helm/retail-store-sample-app/src/app/chart"
+  chart     = "${path.root}/../helm/chart/app/chart"
   namespace = kubernetes_namespace.retail_app.metadata[0].name
 
   values = [templatefile("${path.module}/values-override.yaml.tpl", {
