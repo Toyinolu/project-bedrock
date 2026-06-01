@@ -83,3 +83,5 @@ output "app_url" {
   description = "URL to access the running Retail Store application"
   value       = module.k8s.app_url
 }
+
+# Fresh plan verification run.
