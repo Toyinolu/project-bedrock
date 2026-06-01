@@ -28,3 +28,5 @@ terraform {
     }
   }
 }
+
+# Pipeline verified green: terraform-plan on PR + terraform-apply on merge.
