@@ -32,7 +32,7 @@ resource "kubernetes_secret" "orders_db" {
   }
 
   data = {
-    RETAIL_ORDERS_PERSISTENCE_USER     = var.postgres_username
+    RETAIL_ORDERS_PERSISTENCE_USERNAME = var.postgres_username
     RETAIL_ORDERS_PERSISTENCE_PASSWORD = var.postgres_password
   }
 

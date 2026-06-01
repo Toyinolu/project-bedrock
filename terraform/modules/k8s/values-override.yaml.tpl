@@ -54,7 +54,7 @@ orders:
       secret:
         create: false
         name: orders-db
-        usernameKey: RETAIL_ORDERS_PERSISTENCE_USER
+        usernameKey: RETAIL_ORDERS_PERSISTENCE_USERNAME
         passwordKey: RETAIL_ORDERS_PERSISTENCE_PASSWORD
     messaging:
       provider: rabbitmq
