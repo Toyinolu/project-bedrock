@@ -2,7 +2,7 @@
   "app_url": {
     "sensitive": false,
     "type": "string",
-    "value": "http://k8s-retailap-ui-6039ab69e6-1367302220.us-east-1.elb.amazonaws.com"
+    "value": "http://k8s-retailap-ui-6039ab69e6-1788588630.us-east-1.elb.amazonaws.com"
   },
   "assets_bucket_name": {
     "sensitive": false,
@@ -24,6 +24,11 @@
     "type": "string",
     "value": "REDACTED_SEE_GOOGLE_DOC"
   },
+  "bedrock_dev_view_secret_access_key": {
+    "sensitive": true,
+    "type": "string",
+    "value": "REDACTED_SEE_GOOGLE_DOC"
+  },
   "cloudwatch_app_log_group": {
     "sensitive": false,
     "type": "string",
@@ -37,7 +42,7 @@
   "cluster_endpoint": {
     "sensitive": false,
     "type": "string",
-    "value": "https://3C223D8FBF58F0FA0CAA6791405F9D49.gr7.us-east-1.eks.amazonaws.com"
+    "value": "https://E34ACCB65B3DB37DB77D1FC5D245B694.gr7.us-east-1.eks.amazonaws.com"
   },
   "cluster_name": {
     "sensitive": false,
@@ -52,7 +57,7 @@
   "eks_oidc_provider_arn": {
     "sensitive": false,
     "type": "string",
-    "value": "arn:aws:iam::094156048784:oidc-provider/oidc.eks.us-east-1.amazonaws.com/id/3C223D8FBF58F0FA0CAA6791405F9D49"
+    "value": "arn:aws:iam::094156048784:oidc-provider/oidc.eks.us-east-1.amazonaws.com/id/E34ACCB65B3DB37DB77D1FC5D245B694"
   },
   "rds_mysql_endpoint": {
     "sensitive": false,
@@ -72,9 +77,6 @@
   "vpc_id": {
     "sensitive": false,
     "type": "string",
-    "value": "vpc-052ae960f7fc89b9c"
-  },
-  "bedrock_dev_view_secret_access_key": {
-    "value": "REDACTED_SEE_GOOGLE_DOC"
+    "value": "vpc-0cd1031805a136920"
   }
 }
