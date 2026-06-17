@@ -212,3 +212,5 @@ echo "Console: https://$(aws sts get-caller-identity --query Account --output te
 ## Architecture
 
 See [docs/architecture-diagram.png](docs/architecture-diagram.png).
+
+<!-- CI/CD proof: this README-only PR must trigger the plan workflow and post a comment. -->
