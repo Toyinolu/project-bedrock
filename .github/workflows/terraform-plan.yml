@@ -3,8 +3,6 @@ name: Terraform Plan
 on:
   pull_request:
     branches: [main]
-    paths:
-      - "terraform/**"
 
 permissions:
   id-token: write
@@ -67,7 +65,7 @@ jobs:
             const body = '## Terraform Plan\n\n<details><summary>Show Plan</summary>\n\n```\n' +
               plan + '\n```\n\n</details>\n\n*Triggered by @' +
               context.actor + ' on `' + context.ref + '`*';
-            github.rest.issues.createComment({
+            await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
