@@ -50,7 +50,41 @@ jobs:
         working-directory: terraform
         run: terraform init
 
-      - name: Terraform Apply
+      # ── Two-phase apply ──────────────────────────────────────────────────
+      # On a from-scratch run the brand-new EKS endpoint hostname takes a few
+      # minutes to become DNS-resolvable. If the kubernetes/helm providers try
+      # to reach it in the same pass that creates the cluster, they fail with
+      # "no such host". So we apply the AWS infra first, wait for the EKS API to
+      # be reachable, then apply the in-cluster (kubernetes/helm) resources.
+      - name: Terraform Apply — AWS infra (EKS, RDS, IAM, S3/Lambda, DynamoDB)
+        working-directory: terraform
+        run: |
+          terraform apply -auto-approve \
+            -target=module.vpc \
+            -target=module.eks \
+            -target=module.rds \
+            -target=module.dynamodb \
+            -target=module.secrets \
+            -target=module.iam \
+            -target=module.serverless \
+            -target=aws_eks_addon.cloudwatch_observability \
+            -target=aws_eks_access_entry.github_actions \
+            -target=aws_eks_access_policy_association.github_actions \
+            -target=aws_iam_user_policy.bedrock_dev_s3_put
+
+      - name: Wait for EKS API endpoint to be reachable
+        run: |
+          aws eks update-kubeconfig --name project-bedrock-cluster --region us-east-1
+          for i in $(seq 1 40); do
+            if kubectl get --raw='/readyz' >/dev/null 2>&1; then
+              echo "EKS API is reachable."; exit 0
+            fi
+            echo "Waiting for EKS API endpoint to resolve/serve ($i/40)..."
+            sleep 20
+          done
+          echo "EKS API never became reachable within timeout."; exit 1
+
+      - name: Terraform Apply — full (in-cluster k8s + Helm app deployment)
         working-directory: terraform
         run: terraform apply -auto-approve
 

@@ -63,11 +63,30 @@ After first apply, add this secret in your GitHub repo settings → Secrets and 
 
 ## Step 4 — First Deploy (local)
 
+On a **from-scratch** apply, the brand-new EKS API endpoint takes a few minutes
+to become DNS-resolvable. The Kubernetes/Helm resources must not be created until
+it is reachable, so deploy in two phases (the CI pipeline does the same):
+
 ```bash
 cd terraform
 terraform init
-terraform plan
-terraform apply
+
+# Phase 1 — AWS infra (EKS, RDS, DynamoDB, IAM, S3/Lambda)
+terraform apply -auto-approve \
+  -target=module.vpc -target=module.eks -target=module.rds \
+  -target=module.dynamodb -target=module.secrets -target=module.iam \
+  -target=module.serverless \
+  -target=aws_eks_addon.cloudwatch_observability \
+  -target=aws_eks_access_entry.github_actions \
+  -target=aws_eks_access_policy_association.github_actions \
+  -target=aws_iam_user_policy.bedrock_dev_s3_put
+
+# Wait for the EKS API to be reachable
+aws eks update-kubeconfig --name project-bedrock-cluster --region us-east-1
+until kubectl get --raw='/readyz' >/dev/null 2>&1; do echo "waiting for EKS API..."; sleep 20; done
+
+# Phase 2 — in-cluster resources + Helm app deployment
+terraform apply -auto-approve
 ```
 
 > **EKS version**: deployed on **v1.35** (≥ v1.34 as required). Check available
@@ -76,8 +95,22 @@ terraform apply
 
 ## Step 5 — CI/CD Pipeline
 
-- **Create a PR** targeting `main` → triggers `terraform plan` → plan output posted as PR comment
+- **Create a PR** targeting `main` → triggers `terraform plan` → plan output posted as a PR comment
 - **Merge to main** → triggers `terraform apply` → `grading.json` auto-committed to repo root
+
+The apply workflow runs a **two-phase `terraform apply`** (AWS infra → wait for EKS
+API → in-cluster resources) so a from-scratch run succeeds reliably.
+
+**Automated application deployment:** the retail-store app is deployed by Terraform
+itself — `module.k8s` contains `helm_release.retail_store` pointing at the committed
+chart in [`helm/chart/`](helm/chart/). So `terraform apply` (run by CI on merge)
+provisions the infrastructure **and** deploys the application — no separate manual
+deploy step.
+
+Auth uses **GitHub OIDC** (`aws-actions/configure-aws-credentials` with
+`secrets.AWS_ROLE_ARN`); no AWS keys are hardcoded in the workflows. The pipeline
+must run against **this repository** (where the `AWS_ROLE_ARN` secret is configured),
+not a fork.
 
 ## Step 6 — Access the Application
 
