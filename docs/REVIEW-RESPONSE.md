@@ -74,7 +74,29 @@ injected as **Kubernetes Secrets** referenced by name (`secret.create: false`,
 `passwordKey: ...` in `helm/values-override.yaml`). Git history contains no real keys
 (verified). `grading.json` has the three credential fields redacted on purpose.
 
-### "CICD setup does not meet requirement" / "CICD pipeline unsuccessful" / "Incorrect event driven CICD pipeline" / "Pipeline did not include automated app deployment"
+### CI/CD — meets the reviewer's stated criteria
+
+The reviewer specified three criteria for a properly set-up pipeline:
+
+1. **Automated GitHub Actions workflow handling infra AND app deployment** —
+   the `Terraform Apply` workflow runs `terraform apply`, which provisions all AWS
+   infrastructure **and** deploys the retail-store application via
+   `module.k8s.helm_release.retail_store` (committed chart in `helm/chart/`,
+   data layer overridden to RDS/DynamoDB). One workflow, both layers.
+2. **Feature branches with PRs as triggers for the respective workflows** —
+   PR → `Terraform Plan` (posts plan as a PR comment); merge → `Terraform Apply`.
+   Demonstrated end-to-end in **PR #4** (`feature/demonstrate-gitops-flow`):
+   the PR triggered Plan (commented the diff), and merging it produced the
+   `Merge pull request #4` commit on `main` that triggered Apply.
+3. **Workflow runs that do all this successfully** — both the Plan (on the PR) and
+   the Apply (on the merge) completed **green**; the `ManagedBy=terraform` tag the
+   PR introduced is now present on the live resources, proving the apply did real work.
+
+Additional robustness: the apply is **two-phase** (AWS infra → wait for EKS
+`/readyz` → in-cluster k8s/Helm), so a from-scratch run does not hit the EKS
+endpoint DNS-propagation race. Auth is via GitHub OIDC; no hardcoded keys.
+
+#### (earlier comments) "does not meet requirement" / "unsuccessful" / "incorrect event driven" / "no automated app deployment"
 **Fixed and reproducible:**
 - **PR → `terraform plan`, posted as a PR comment**; **merge to main → `terraform apply`**
   (`.github/workflows/terraform-plan.yml`, `terraform-apply.yml`). Triggers are
